@@ -5,6 +5,8 @@ on:
     branches:
       - master
   pull_request:
+    branches:
+      - master
 
 jobs:
   build-and-test:
@@ -34,11 +36,14 @@ jobs:
         uses: docker/setup-buildx-action@v2
 
       - name: Log in to Docker Hub (Optional)
-        if: ${{ secrets.DOCKER_USERNAME && secrets.DOCKER_PASSWORD }}
+        if: env.DOCKER_USERNAME != '' && env.DOCKER_PASSWORD != ''
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Build Backend Image
         run: docker build -t my-backend ./backend
@@ -46,14 +51,10 @@ jobs:
       - name: Build Frontend Image
         run: docker build -t my-frontend ./frontend
 
-      - name: Compose Up (Build and Run All Services)
+      - name: Start Full Stack with Docker Compose
         run: docker-compose up -d --build
 
-      # Optional: Add test commands here if backend has tests
-      # - name: Run Backend Tests
-      #   run: docker exec backend-container-name npm test
-
-      - name: Docker Compose Logs (for debugging)
+      - name: Docker Compose Logs
         run: docker-compose logs
 
       - name: Shut Down Docker Compose
